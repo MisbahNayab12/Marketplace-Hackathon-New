@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react';
 import React from 'react'
 import Image from 'next/image'
 import CaretRight from '../../public/CaretRight.png';
@@ -6,6 +7,7 @@ import Link from 'next/link';
 import { useAppSelector } from '@/redux/features/store';
 import Arrow from '../../public/ArrowRight.png'
 import { urlFor } from "@/sanity/lib/image";
+import { client } from '../../sanity/lib/client';
 
 export default function Checkout() {
     const cartItems = useAppSelector((state) => state.cartReducer);
@@ -14,6 +16,47 @@ export default function Checkout() {
         (sum, item) => sum + item.price * item.quantity,
         0
     );
+
+    const [formData, setFormData] = useState({
+        firstName: '',
+        lastName: '',
+        emailAddress: '',
+        phone: '',
+        company: '',
+        country: 'Pakistan',
+        city: 'Karachi',
+        zipCode: '',
+        address1: '',
+        address2: ''
+    })
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handlePlaceOrder = async () => {
+        try {
+            const orderData = {
+                ...formData,
+                cartItems: cartItems.map(item => ({
+                    _type: 'reference',
+                    _ref: item._id || "",
+                    _key: item._id
+                })),
+                total: totalAmount,
+                status: 'pending'
+            };
+            await client.create({
+                _type: 'order',
+                ...orderData
+            });
+
+            alert('Order placed successfully!');
+        } catch (error) {
+            console.error('Error placing order:', error);
+            alert(' Failed to place order.');
+        }
+    };
 
     return (
         <div className="bg-white min-h-screen">
@@ -34,33 +77,33 @@ export default function Checkout() {
                     <div className="flex flex-col md:flex-row justify-between items-center gap-5 mt-7">
                         <div>
                             <h1>First Name</h1>
-                            <input type="text" className="border py-2 px-4 w-64 mt-1" />
+                            <input type="text" name="firstName" className="border py-2 px-4 w-64 mt-1" onChange={handleChange}/>
                         </div>
                         <div>
                             <h1>Last Name</h1>
-                            <input type="text" className="border py-2 px-4 w-64 mt-1" />
+                            <input type="text" name="lastName" className="border py-2 px-4 w-64 mt-1" onChange={handleChange} />
                         </div>
                     </div>
 
                     <div className="flex flex-col md:flex-row justify-between items-center gap-5 mt-4">
                         <div>
                             <h1>Email Address</h1>
-                            <input type="text" className="border py-2 px-4 w-64 mt-1" />
+                            <input name="emailAddress" type="text" className="border py-2 px-4 w-64 mt-1" onChange={handleChange}/>
                         </div>
                         <div>
                             <h1>Phone Number</h1>
-                            <input type="text" className="border py-2 px-4 w-64 mt-1" />
+                            <input type="text" name="phone" className="border py-2 px-4 w-64 mt-1" onChange={handleChange}/>
                         </div>
                     </div>
 
                     <div className="flex flex-col md:flex-row justify-between items-center gap-5 mt-4">
                         <div>
                             <h1>Company</h1>
-                            <input type="text" className="border py-2 px-4 w-64 mt-1" />
+                            <input type="text" name="company" className="border py-2 px-4 w-64 mt-1" onChange={handleChange}/>
                         </div>
                         <div>
                             <h1>Country</h1>
-                            <select className="border py-2 px-3 w-64 mt-1 text-gray-500">
+                            <select name="country" className="border py-2 px-3 w-64 mt-1 text-gray-500" onChange={handleChange}>
                                 <option>Pakistan</option>
                                 <option>USA</option>
                                 <option>Canada</option>
@@ -71,7 +114,7 @@ export default function Checkout() {
                     <div className="flex flex-col md:flex-row justify-between items-center gap-5 mt-4">
                         <div>
                             <h1>City</h1>
-                            <select className="border py-2 px-3 w-64 mt-1 text-gray-500">
+                            <select name="city" className="border py-2 px-3 w-64 mt-1 text-gray-500" onChange={handleChange}>
                                 <option>Karachi</option>
                                 <option>Lahore</option>
                                 <option>Islamabad</option>
@@ -79,18 +122,18 @@ export default function Checkout() {
                         </div>
                         <div>
                             <h1>Zip code</h1>
-                            <input type="text" className="border py-2 px-4 w-64 mt-1" />
+                            <input type="text" name="zipCode" className="border py-2 px-4 w-64 mt-1" onChange={handleChange}/>
                         </div>
                     </div>
 
                     <div className="flex flex-col md:flex-row justify-between items-center gap-5 mt-4">
                         <div>
                             <h1>Address 1</h1>
-                            <input type="text" className="border py-2 px-4 w-64 mt-1" />
+                            <input type="text" name="address1" className="border py-2 px-4 w-64 mt-1" onChange={handleChange}/>
                         </div>
                         <div>
                             <h1>Address 2</h1>
-                            <input type="text" className="border py-2 px-4 w-64 mt-1" />
+                            <input type="text" name="address2" className="border py-2 px-4 w-64 mt-1" onChange={handleChange}/>
                         </div>
                     </div>
 
@@ -153,16 +196,12 @@ export default function Checkout() {
                         </div>
                     </div>
 
-
-                    <button className="flex justify-center items-center gap-5 bg-primary text-white hover:bg-amber-400 py-2 px-4 w-full mt-3 font-sans">
+                    <button onClick={handlePlaceOrder} className="flex justify-center items-center gap-5 bg-primary text-white hover:bg-amber-400 py-2 px-4 w-full mt-3 font-sans">
                         Place an order
                         <Image src={Arrow} alt="icon" />
                     </button>
-
-
                 </div>
             </div>
-
         </div>
     )
 }
